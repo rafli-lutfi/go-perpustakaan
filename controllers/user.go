@@ -100,7 +100,7 @@ func (u *userAPI) Register(c *gin.Context) {
 		return
 	}
 
-	if user.Email == "" || user.Password == "" || user.Fullname == "" || user.NPM <= 0 {
+	if user.Email == "" || user.Password == "" || user.Fullname == "" || user.NPM == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
 			Error:       "register data is empty",
 			Description: "please check your data before register",
