@@ -30,8 +30,8 @@ func RunServer(db *gorm.DB, r *gin.Engine) *gin.Engine {
 	}
 
 	server := r.Group("/api/v1")
-	users := server.Group("/users")
 
+	users := server.Group("/users")
 	users.POST("/login", apiHandler.UserAPIHandler.Login)
 	users.POST("/register", apiHandler.UserAPIHandler.Register)
 	users.POST("/logout", apiHandler.UserAPIHandler.Logout)
@@ -41,6 +41,9 @@ func RunServer(db *gorm.DB, r *gin.Engine) *gin.Engine {
 
 	jurusan := server.Group("/jurusan")
 	jurusan.GET("/getAll", middleware.Auth, apiHandler.JurusanAPIHandler.GetAllJurusan)
+	jurusan.POST("/create", middleware.Auth, apiHandler.JurusanAPIHandler.CreateJurusan)
+	jurusan.PUT("/update", middleware.Auth, apiHandler.JurusanAPIHandler.UpdateJurusan)
+	jurusan.DELETE("/delete", middleware.Auth, apiHandler.JurusanAPIHandler.DeleteJurusan)
 
 	return r
 }

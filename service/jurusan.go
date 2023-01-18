@@ -9,6 +9,9 @@ import (
 
 type JurusanService interface {
 	GetAllJurusan(ctx context.Context) ([]model.Jurusan, error)
+	NewJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error)
+	UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) (model.Jurusan, error)
+	DeleteJurusan(ctx context.Context, id int) error
 }
 
 type jurusanService struct {
@@ -26,4 +29,30 @@ func (s *jurusanService) GetAllJurusan(ctx context.Context) ([]model.Jurusan, er
 	}
 
 	return dbJurusan, nil
+}
+
+func (s *jurusanService) NewJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error) {
+	newJurusan, err := s.JurusanDatabase.CreateJurusan(ctx, jurusan)
+	if err != nil {
+		return model.Jurusan{}, err
+	}
+
+	return newJurusan, nil
+}
+
+func (s *jurusanService) UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) (model.Jurusan, error) {
+	err := s.JurusanDatabase.UpdateJurusan(ctx, jurusan)
+	if err != nil {
+		return model.Jurusan{}, err
+	}
+
+	return *jurusan, nil
+}
+
+func (s *jurusanService) DeleteJurusan(ctx context.Context, id int) error {
+	err := s.JurusanDatabase.DeleteJurusan(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

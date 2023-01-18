@@ -12,7 +12,7 @@ type JurusanDatabase interface {
 	GetJurusanByID(ctx context.Context, id int) (model.Jurusan, error)
 	GetAllJurusan(ctx context.Context) ([]model.Jurusan, error)
 	CreateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error)
-	UpdateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error)
+	UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) error
 	DeleteJurusan(ctx context.Context, id int) error
 }
 
@@ -55,7 +55,7 @@ func (d *jurusanDatabase) GetAllJurusan(ctx context.Context) ([]model.Jurusan, e
 }
 
 func (d *jurusanDatabase) CreateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error) {
-	err := d.db.WithContext(ctx).Create(jurusan).Error
+	err := d.db.WithContext(ctx).Create(&jurusan).Error
 	if err != nil {
 		return model.Jurusan{}, err
 	}
@@ -63,13 +63,13 @@ func (d *jurusanDatabase) CreateJurusan(ctx context.Context, jurusan model.Jurus
 	return jurusan, nil
 }
 
-func (d *jurusanDatabase) UpdateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error) {
-	err := d.db.WithContext(ctx).Model(&model.Jurusan{}).Updates(jurusan).Error
+func (d *jurusanDatabase) UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) error {
+	err := d.db.WithContext(ctx).Model(&model.Jurusan{}).Where("id = ?", jurusan.ID).Updates(jurusan).Error
 	if err != nil {
-		return model.Jurusan{}, err
+		return err
 	}
 
-	return jurusan, nil
+	return nil
 }
 
 func (d *jurusanDatabase) DeleteJurusan(ctx context.Context, id int) error {
