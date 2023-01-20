@@ -27,7 +27,14 @@ func ConnectToDatabase() {
 		panic(err)
 	}
 
-	db.AutoMigrate(model.User{}, model.Jurusan{})
+	db.AutoMigrate(
+		model.User{},
+		model.Jurusan{},
+		model.Buku{},
+		model.Kategori{},
+		model.Penerbit{},
+		model.Author{},
+	)
 }
 
 func GetDBConnection() *gorm.DB {

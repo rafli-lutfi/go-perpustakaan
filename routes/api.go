@@ -12,21 +12,41 @@ import (
 type APIHandler struct {
 	UserAPIHandler    controllers.UserAPI
 	JurusanAPIHandler controllers.JurusanAPI
+	BukuAPIHandler    controllers.BukuAPI
+	KategoriHandler   controllers.KategoriAPI
+	PenerbitHandler   controllers.PenerbitAPI
+	AuthorHandler     controllers.AuthorAPI
 }
 
 func RunServer(db *gorm.DB, r *gin.Engine) *gin.Engine {
 	userDatabase := database.NewUserDatabase(db)
 	jurusanDatabase := database.NewJurusanDatabase(db)
+	bukuDatabase := database.NewBukuDatabase(db)
+	kategoriDatabase := database.NewKategoriDatabase(db)
+	penerbitDatabase := database.NewPenerbitDatabase(db)
+	authorDatabase := database.NewAuthorDatabase(db)
 
 	userService := service.NewUserService(userDatabase, jurusanDatabase)
 	jurusanService := service.NewJurusanService(jurusanDatabase)
+	bukuService := service.NewBukuService(bukuDatabase, kategoriDatabase, penerbitDatabase, authorDatabase)
+	kategoriService := service.NewKategoriService(kategoriDatabase)
+	penerbitService := service.NewPenerbitService(penerbitDatabase)
+	authorService := service.NewAuthorService(authorDatabase)
 
 	userAPIHandler := controllers.NewUserAPI(userService)
 	jurusanAPIHandler := controllers.NewJurusanAPI(jurusanService)
+	bukuAPIHandler := controllers.NewBukuAPI(bukuService)
+	kategoriAPIHandler := controllers.NewKategoriAPI(kategoriService)
+	penerbitAPIHandler := controllers.NewPenerbitAPI(penerbitService)
+	authorAPIHandler := controllers.NewAuthorAPI(authorService)
 
 	apiHandler := APIHandler{
 		UserAPIHandler:    userAPIHandler,
 		JurusanAPIHandler: jurusanAPIHandler,
+		BukuAPIHandler:    bukuAPIHandler,
+		KategoriHandler:   kategoriAPIHandler,
+		PenerbitHandler:   penerbitAPIHandler,
+		AuthorHandler:     authorAPIHandler,
 	}
 
 	server := r.Group("/api/v1")
@@ -44,6 +64,8 @@ func RunServer(db *gorm.DB, r *gin.Engine) *gin.Engine {
 	jurusan.POST("/create", middleware.Auth, apiHandler.JurusanAPIHandler.CreateJurusan)
 	jurusan.PUT("/update", middleware.Auth, apiHandler.JurusanAPIHandler.UpdateJurusan)
 	jurusan.DELETE("/delete", middleware.Auth, apiHandler.JurusanAPIHandler.DeleteJurusan)
+
+	adminRoutes(server, apiHandler)
 
 	return r
 }
