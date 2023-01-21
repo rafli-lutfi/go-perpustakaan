@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rafli-lutfi/perpustakaan/database"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -9,7 +10,7 @@ import (
 
 type BukuService interface {
 	GetBukuByID(ctx context.Context, idBuku int) (model.BukuInfo, error)
-	GetAllBuku(ctx context.Context) ([]model.Buku, error)
+	GetAllBuku(ctx context.Context) ([]model.BukuInfo, error)
 	CreateNewBuku(ctx context.Context, buku model.Buku) (model.Buku, error)
 	UpdateBuku(ctx context.Context, buku model.Buku) error
 	DeleteBuku(ctx context.Context, id int) error
@@ -32,9 +33,17 @@ func (s *bukuService) GetBukuByID(ctx context.Context, idBuku int) (model.BukuIn
 		return model.BukuInfo{}, err
 	}
 
+	if buku.ID == 0 || buku.JudulBuku == "" {
+		return model.BukuInfo{}, errors.New("buku not found")
+	}
+
 	kategori, err := s.kategoriDatabase.GetKategoriByID(ctx, buku.IDKategori)
 	if err != nil {
 		return model.BukuInfo{}, err
+	}
+
+	if kategori.ID == 0 || kategori.NamaKategori == "" {
+		return model.BukuInfo{}, errors.New("kategori not found")
 	}
 
 	penerbit, err := s.penerbitDatabase.GetPenerbitByID(ctx, buku.IDPenerbit)
@@ -42,9 +51,17 @@ func (s *bukuService) GetBukuByID(ctx context.Context, idBuku int) (model.BukuIn
 		return model.BukuInfo{}, err
 	}
 
+	if penerbit.ID == 0 || penerbit.NamaPenerbit == "" {
+		return model.BukuInfo{}, errors.New("penerbit not found")
+	}
+
 	author, err := s.authorDatabase.GetAuthorByID(ctx, buku.IDAuthor)
 	if err != nil {
 		return model.BukuInfo{}, err
+	}
+
+	if author.ID == 0 || author.NamaPengarang == "" {
+		return model.BukuInfo{}, errors.New("author not found")
 	}
 
 	bukuInfo := model.BukuInfo{
@@ -60,13 +77,53 @@ func (s *bukuService) GetBukuByID(ctx context.Context, idBuku int) (model.BukuIn
 	return bukuInfo, nil
 }
 
-func (s *bukuService) GetAllBuku(ctx context.Context) ([]model.Buku, error) {
+func (s *bukuService) GetAllBuku(ctx context.Context) ([]model.BukuInfo, error) {
 	listBuku, err := s.bukuDatabase.GetAllBuku(ctx)
 	if err != nil {
-		return []model.Buku{}, err
+		return []model.BukuInfo{}, err
 	}
 
-	return listBuku, nil
+	var listBukuInfo []model.BukuInfo
+
+	for _, buku := range listBuku {
+		kategori, err := s.kategoriDatabase.GetKategoriByID(ctx, buku.IDKategori)
+		if err != nil {
+			return []model.BukuInfo{}, err
+		}
+		if kategori.ID == 0 || kategori.NamaKategori == "" {
+			return []model.BukuInfo{}, errors.New("kategori not found")
+		}
+
+		penerbit, err := s.penerbitDatabase.GetPenerbitByID(ctx, buku.IDPenerbit)
+		if err != nil {
+			return []model.BukuInfo{}, err
+		}
+		if penerbit.ID == 0 || penerbit.NamaPenerbit == "" {
+			return []model.BukuInfo{}, errors.New("penerbit not found")
+		}
+
+		author, err := s.authorDatabase.GetAuthorByID(ctx, buku.IDAuthor)
+		if err != nil {
+			return []model.BukuInfo{}, err
+		}
+		if author.ID == 0 || author.NamaPengarang == "" {
+			return []model.BukuInfo{}, errors.New("author not found")
+		}
+
+		bukuinfo := model.BukuInfo{
+			ID:            buku.ID,
+			JudulBuku:     buku.JudulBuku,
+			TahunTerbit:   buku.TahunTerbit,
+			Stock:         buku.Stock,
+			NamaKategori:  kategori.NamaKategori,
+			NamaPenerbit:  penerbit.NamaPenerbit,
+			NamaPengarang: author.NamaPengarang,
+		}
+
+		listBukuInfo = append(listBukuInfo, bukuinfo)
+	}
+
+	return listBukuInfo, nil
 }
 
 func (s *bukuService) CreateNewBuku(ctx context.Context, buku model.Buku) (model.Buku, error) {
@@ -88,7 +145,16 @@ func (s *bukuService) UpdateBuku(ctx context.Context, buku model.Buku) error {
 }
 
 func (s *bukuService) DeleteBuku(ctx context.Context, id int) error {
-	err := s.bukuDatabase.DeleteBuku(ctx, id)
+	buku, err := s.bukuDatabase.GetBukuByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if buku.ID == 0 || buku.JudulBuku == "" {
+		return errors.New("buku not found")
+	}
+
+	err = s.bukuDatabase.DeleteBuku(ctx, id)
 	if err != nil {
 		return err
 	}

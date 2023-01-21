@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rafli-lutfi/perpustakaan/database"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -50,7 +51,16 @@ func (s *jurusanService) UpdateJurusan(ctx context.Context, jurusan *model.Jurus
 }
 
 func (s *jurusanService) DeleteJurusan(ctx context.Context, id int) error {
-	err := s.JurusanDatabase.DeleteJurusan(ctx, id)
+	jurusan, err := s.JurusanDatabase.GetJurusanByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if jurusan.ID == 0 || jurusan.NamaJurusan == "" {
+		return errors.New("jurusan not found")
+	}
+
+	err = s.JurusanDatabase.DeleteJurusan(ctx, id)
 	if err != nil {
 		return err
 	}

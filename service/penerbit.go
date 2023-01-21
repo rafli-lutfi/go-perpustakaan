@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rafli-lutfi/perpustakaan/database"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -27,6 +28,10 @@ func (s *penerbitService) GetPenerbitByID(ctx context.Context, id int) (model.Pe
 	penerbit, err := s.penerbitDatabase.GetPenerbitByID(ctx, id)
 	if err != nil {
 		return model.Penerbit{}, err
+	}
+
+	if penerbit.ID == 0 || penerbit.NamaPenerbit == "" {
+		return model.Penerbit{}, errors.New("penerbit not found")
 	}
 
 	return penerbit, nil
@@ -60,7 +65,16 @@ func (s *penerbitService) UpdatePenerbit(ctx context.Context, penerbit model.Pen
 }
 
 func (s *penerbitService) DeletePenerbit(ctx context.Context, id int) error {
-	err := s.penerbitDatabase.DeletePenerbit(ctx, id)
+	penerbit, err := s.penerbitDatabase.GetPenerbitByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if penerbit.ID == 0 || penerbit.NamaPenerbit == "" {
+		return errors.New("penerbit not found")
+	}
+
+	err = s.penerbitDatabase.DeletePenerbit(ctx, id)
 	if err != nil {
 		return err
 	}

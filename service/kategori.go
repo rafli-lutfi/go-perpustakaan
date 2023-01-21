@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rafli-lutfi/perpustakaan/database"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -29,6 +30,10 @@ func (s *kategoriService) GetKategoriByID(ctx context.Context, id int) (model.Ka
 		return model.Kategori{}, err
 	}
 
+	if kategori.ID == 0 || kategori.NamaKategori == "" {
+		return model.Kategori{}, errors.New("kategori not found")
+	}
+
 	return kategori, nil
 }
 
@@ -42,12 +47,12 @@ func (s *kategoriService) GetAllKategori(ctx context.Context) ([]model.Kategori,
 }
 
 func (s *kategoriService) CreateNewKategori(ctx context.Context, kategori model.Kategori) (model.Kategori, error) {
-	kategori, err := s.kategoriDatabase.CreateKategori(ctx, kategori)
+	newKategori, err := s.kategoriDatabase.CreateKategori(ctx, kategori)
 	if err != nil {
 		return model.Kategori{}, err
 	}
 
-	return kategori, nil
+	return newKategori, nil
 }
 
 func (s *kategoriService) UpdateKategori(ctx context.Context, kategori model.Kategori) error {
@@ -60,7 +65,16 @@ func (s *kategoriService) UpdateKategori(ctx context.Context, kategori model.Kat
 }
 
 func (s *kategoriService) DeleteKategori(ctx context.Context, id int) error {
-	err := s.kategoriDatabase.DeleteKategori(ctx, id)
+	kategori, err := s.kategoriDatabase.GetKategoriByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if kategori.ID == 0 || kategori.NamaKategori == "" {
+		return errors.New("kategori not found")
+	}
+
+	err = s.kategoriDatabase.DeleteKategori(ctx, id)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ import (
 type UserService interface {
 	Login(ctx context.Context, user *model.User) (id int, err error)
 	Register(ctx context.Context, user *model.User) (model.User, error)
-
+	Update(ctx context.Context, user *model.User) error
 	Delete(ctx context.Context, id int) error
 	GetUserData(ctx context.Context, idUser int) (model.UserInfo, error)
 }
@@ -67,7 +67,21 @@ func (s *userService) Register(ctx context.Context, user *model.User) (model.Use
 }
 
 func (s *userService) Delete(ctx context.Context, id int) error {
-	return s.userDatabase.DeleteUser(ctx, id)
+	dbUser, err := s.userDatabase.GetUserByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if dbUser.ID == 0 || dbUser.Fullname == "" {
+		return errors.New("user not found")
+	}
+
+	err = s.userDatabase.DeleteUser(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *userService) GetUserData(ctx context.Context, idUser int) (model.UserInfo, error) {
@@ -76,11 +90,19 @@ func (s *userService) GetUserData(ctx context.Context, idUser int) (model.UserIn
 		return model.UserInfo{}, err
 	}
 
+	if dbUser.ID == 0 || dbUser.Fullname == "" {
+		return model.UserInfo{}, errors.New("user not found")
+	}
+
 	idJurusan := dbUser.IDJurusan
 
 	dbJurusan, err := s.jurusanDatabase.GetJurusanByID(ctx, idJurusan)
 	if err != nil {
 		return model.UserInfo{}, err
+	}
+
+	if dbJurusan.ID == 0 || dbJurusan.NamaJurusan == "" {
+		return model.UserInfo{}, errors.New("jurusan not found")
 	}
 
 	userData := model.UserInfo{
@@ -96,11 +118,11 @@ func (s *userService) GetUserData(ctx context.Context, idUser int) (model.UserIn
 	return userData, nil
 }
 
-func (s *userService) Update(ctx context.Context, user *model.User) (model.User, error) {
+func (s *userService) Update(ctx context.Context, user *model.User) error {
 	err := s.userDatabase.UpdateUser(ctx, user)
 	if err != nil {
-		return model.User{}, err
+		return err
 	}
 
-	return *user, nil
+	return nil
 }

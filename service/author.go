@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rafli-lutfi/perpustakaan/database"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -27,6 +28,10 @@ func (s *authorService) GetAuthorByID(ctx context.Context, id int) (model.Author
 	author, err := s.authorDatabase.GetAuthorByID(ctx, id)
 	if err != nil {
 		return model.Author{}, err
+	}
+
+	if author.ID == 0 || author.NamaPengarang == "" {
+		return model.Author{}, errors.New("author not found")
 	}
 
 	return author, nil
@@ -60,7 +65,16 @@ func (s *authorService) UpdateAuthor(ctx context.Context, author model.Author) e
 }
 
 func (s *authorService) DeleteAuthor(ctx context.Context, id int) error {
-	err := s.authorDatabase.DeleteAuthor(ctx, id)
+	author, err := s.authorDatabase.GetAuthorByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if author.ID == 0 || author.NamaPengarang == "" {
+		return errors.New("author not found")
+	}
+
+	err = s.authorDatabase.DeleteAuthor(ctx, id)
 	if err != nil {
 		return err
 	}
