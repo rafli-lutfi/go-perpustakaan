@@ -32,26 +32,36 @@ func (a *authorAPI) GetAuthorByID(c *gin.Context) {
 	dataAuthor, err := a.authorService.GetAuthorByID(c.Request.Context(), idAuthorInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to get data author",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, dataAuthor)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    dataAuthor,
+		"message": "success get author",
+	})
 }
 
 func (a *authorAPI) GetAllAuthor(c *gin.Context) {
 	listDataAuthor, err := a.authorService.GetAllAuthor(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to get all data author",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, listDataAuthor)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    listDataAuthor,
+		"message": "success get all author",
+	})
 }
 
 func (a *authorAPI) CreateNewAuthor(c *gin.Context) {
@@ -60,6 +70,7 @@ func (a *authorAPI) CreateNewAuthor(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -69,16 +80,20 @@ func (a *authorAPI) CreateNewAuthor(c *gin.Context) {
 	newAuthor, err := a.authorService.CreateNewAuthor(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to create new author",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id_author":   newAuthor.ID,
-		"nama_author": newAuthor.NamaPengarang,
-		"message":     "success create new author",
+	c.JSON(http.StatusCreated, gin.H{
+		"status": http.StatusCreated,
+		"data": gin.H{
+			"id_author":   newAuthor.ID,
+			"nama_author": newAuthor.NamaPengarang,
+		},
+		"message": "success create new author",
 	})
 }
 
@@ -88,6 +103,7 @@ func (a *authorAPI) UpdateAuthor(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -97,6 +113,7 @@ func (a *authorAPI) UpdateAuthor(c *gin.Context) {
 	err = a.authorService.UpdateAuthor(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to update author",
 			Description: err.Error(),
 		})
@@ -104,6 +121,7 @@ func (a *authorAPI) UpdateAuthor(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success update author",
 	})
 }
@@ -115,6 +133,7 @@ func (a *authorAPI) DeleteAuthor(c *gin.Context) {
 	err := a.authorService.DeleteAuthor(c.Request.Context(), idAuthorInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to delete author",
 			Description: err.Error(),
 		})
@@ -122,6 +141,7 @@ func (a *authorAPI) DeleteAuthor(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success delete author",
 	})
 }

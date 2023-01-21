@@ -27,12 +27,18 @@ func (j *jurusanAPI) GetAllJurusan(c *gin.Context) {
 	allJurusan, err := j.jurusanService.GetAllJurusan(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-			Error: "error internal server",
+			Status:      http.StatusInternalServerError,
+			Error:       "error internal server",
+			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, allJurusan)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    allJurusan,
+		"message": "success get all jurusan",
+	})
 }
 
 func (j *jurusanAPI) CreateJurusan(c *gin.Context) {
@@ -41,6 +47,7 @@ func (j *jurusanAPI) CreateJurusan(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -49,6 +56,7 @@ func (j *jurusanAPI) CreateJurusan(c *gin.Context) {
 
 	if input.NamaJurusan == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "form data is empty",
 			Description: "please check your form before submit",
 		})
@@ -58,16 +66,20 @@ func (j *jurusanAPI) CreateJurusan(c *gin.Context) {
 	newJurusan, err := j.jurusanService.NewJurusan(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to create new jurusan",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id_jurusan":   newJurusan.ID,
-		"nama_jurusan": newJurusan.NamaJurusan,
-		"message":      "success create new jurusan",
+	c.JSON(http.StatusCreated, gin.H{
+		"status": http.StatusCreated,
+		"data": gin.H{
+			"id_jurusan":   newJurusan.ID,
+			"nama_jurusan": newJurusan.NamaJurusan,
+		},
+		"message": "success create new jurusan",
 	})
 }
 
@@ -77,6 +89,7 @@ func (j *jurusanAPI) UpdateJurusan(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -85,15 +98,17 @@ func (j *jurusanAPI) UpdateJurusan(c *gin.Context) {
 
 	if input.NamaJurusan == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "form data is empty",
 			Description: "please check your form before submit",
 		})
 		return
 	}
 
-	updatedJurusan, err := j.jurusanService.UpdateJurusan(c.Request.Context(), &input)
+	_, err = j.jurusanService.UpdateJurusan(c.Request.Context(), &input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to update jurusan",
 			Description: err.Error(),
 		})
@@ -101,9 +116,8 @@ func (j *jurusanAPI) UpdateJurusan(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"jurusan_id":   updatedJurusan.ID,
-		"nama_jurusan": updatedJurusan.NamaJurusan,
-		"message":      "success update jurusan",
+		"status":  http.StatusOK,
+		"message": "success update jurusan",
 	})
 }
 
@@ -113,6 +127,7 @@ func (j *jurusanAPI) DeleteJurusan(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -121,6 +136,7 @@ func (j *jurusanAPI) DeleteJurusan(c *gin.Context) {
 
 	if input.ID <= 0 {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "form data is empty",
 			Description: "please check your form before submit",
 		})
@@ -130,6 +146,7 @@ func (j *jurusanAPI) DeleteJurusan(c *gin.Context) {
 	err = j.jurusanService.DeleteJurusan(c.Request.Context(), input.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to delete jurusan",
 			Description: err.Error(),
 		})
@@ -137,6 +154,7 @@ func (j *jurusanAPI) DeleteJurusan(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success delete jurusan",
 	})
 }

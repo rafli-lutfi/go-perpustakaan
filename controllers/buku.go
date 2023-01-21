@@ -32,26 +32,36 @@ func (b *bukuAPI) GetBukuByID(c *gin.Context) {
 	dataBuku, err := b.bukuService.GetBukuByID(c.Request.Context(), idBukuInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to get data buku",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, dataBuku)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    dataBuku,
+		"message": "success get buku",
+	})
 }
 
 func (b *bukuAPI) GetAllBuku(c *gin.Context) {
 	listDataBuku, err := b.bukuService.GetAllBuku(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to get all data buku",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, listDataBuku)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    listDataBuku,
+		"message": "success get all buku",
+	})
 }
 
 func (b *bukuAPI) CreateBuku(c *gin.Context) {
@@ -60,6 +70,7 @@ func (b *bukuAPI) CreateBuku(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -69,16 +80,20 @@ func (b *bukuAPI) CreateBuku(c *gin.Context) {
 	newBuku, err := b.bukuService.CreateNewBuku(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to create new buku",
 			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"id_buku":    newBuku.ID,
-		"judul_buku": newBuku.JudulBuku,
-		"message":    "success create new buku",
+	c.JSON(http.StatusCreated, gin.H{
+		"status": http.StatusCreated,
+		"data": gin.H{
+			"id_buku":    newBuku.ID,
+			"judul_buku": newBuku.JudulBuku,
+		},
+		"message": "success create new buku",
 	})
 }
 
@@ -88,6 +103,7 @@ func (b *bukuAPI) UpdateBuku(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -97,6 +113,7 @@ func (b *bukuAPI) UpdateBuku(c *gin.Context) {
 	err = b.bukuService.UpdateBuku(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to update buku",
 			Description: err.Error(),
 		})
@@ -104,6 +121,7 @@ func (b *bukuAPI) UpdateBuku(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success update buku",
 	})
 }
@@ -115,6 +133,7 @@ func (b *bukuAPI) DeleteBuku(c *gin.Context) {
 	err := b.bukuService.DeleteBuku(c.Request.Context(), idBukuInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to delete buku",
 			Description: err.Error(),
 		})
@@ -122,6 +141,7 @@ func (b *bukuAPI) DeleteBuku(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success delete buku",
 	})
 }

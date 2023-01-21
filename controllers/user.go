@@ -36,6 +36,7 @@ func (u *userAPI) Login(c *gin.Context) {
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -44,6 +45,7 @@ func (u *userAPI) Login(c *gin.Context) {
 
 	if user.Email == "" || user.Password == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "email or password is empty",
 			Description: "email or password is empty",
 		})
@@ -58,6 +60,7 @@ func (u *userAPI) Login(c *gin.Context) {
 	id, err := u.userService.Login(c.Request.Context(), &userData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "failed to login",
 			Description: err.Error(),
 		})
@@ -73,6 +76,7 @@ func (u *userAPI) Login(c *gin.Context) {
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_TOKEN")))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
 			Error:       "invalid to create token",
 			Description: err.Error(),
 		})
@@ -83,7 +87,10 @@ func (u *userAPI) Login(c *gin.Context) {
 	c.SetCookie("session_token", tokenString, 3600*24*2, "/", "localhost", false, true)
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": id,
+		"status": http.StatusOK,
+		"data": gin.H{
+			"user_id": id,
+		},
 		"message": "login success",
 	})
 }
@@ -94,6 +101,7 @@ func (u *userAPI) Register(c *gin.Context) {
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to read body",
 			Description: err.Error(),
 		})
@@ -102,6 +110,7 @@ func (u *userAPI) Register(c *gin.Context) {
 
 	if user.Email == "" || user.Password == "" || user.Fullname == "" || user.NPM == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "register data is empty",
 			Description: "please check your data before register",
 		})
@@ -112,6 +121,7 @@ func (u *userAPI) Register(c *gin.Context) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to hash password",
 			Description: err.Error(),
 		})
@@ -132,6 +142,7 @@ func (u *userAPI) Register(c *gin.Context) {
 	newUser, err := u.userService.Register(c.Request.Context(), &userData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
 			Error:       "failed to create user",
 			Description: err.Error(),
 		})
@@ -139,7 +150,10 @@ func (u *userAPI) Register(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": newUser.ID,
+		"status": http.StatusOK,
+		"data": gin.H{
+			"user_id": newUser.ID,
+		},
 		"message": "register success",
 	})
 }
@@ -148,6 +162,7 @@ func (u *userAPI) Logout(c *gin.Context) {
 	c.SetCookie("session_token", "", -1, "/", "localhost", false, true)
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "logout sucess",
 	})
 }
@@ -157,7 +172,8 @@ func (u *userAPI) Delete(c *gin.Context) {
 
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, model.ErrorResponse{
-			Error: "user id is empty",
+			Status: http.StatusBadRequest,
+			Error:  "user id is empty",
 		})
 		return
 	}
@@ -167,12 +183,14 @@ func (u *userAPI) Delete(c *gin.Context) {
 	err := u.userService.Delete(c.Request.Context(), userIDInt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
-			Error: "error internal server",
+			Status: http.StatusInternalServerError,
+			Error:  "error internal server",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
 		"message": "success delete",
 	})
 }
@@ -184,20 +202,46 @@ func (u *userAPI) GetUserData(c *gin.Context) {
 
 	userInfo, err := u.userService.GetUserData(c.Request.Context(), userIDInt)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
-			Error: err.Error(),
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusInternalServerError,
+			Error:       "failed to get user data",
+			Description: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, userInfo)
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"data":    userInfo,
+		"message": "success get user data",
+	})
 }
 
 func (u *userAPI) UpdateUser(c *gin.Context) {
-	var user model.User
+	var input model.User
 
-	err := c.ShouldBindJSON(&user)
+	err := c.ShouldBindJSON(&input)
 	if err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
+			Error:       "failed to read body",
+			Description: err.Error(),
+		})
 		return
 	}
+
+	err = u.userService.Update(c.Request.Context(), &input)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+			Status:      http.StatusBadRequest,
+			Error:       "failed to update user",
+			Description: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "success delete user",
+	})
 }

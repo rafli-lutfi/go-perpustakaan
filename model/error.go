@@ -1,6 +1,7 @@
 package model
 
 type ErrorResponse struct {
-	Error       string `json:"error"`
+	Status      int    `json:"status"`
+	Error       string `json:"message"`
 	Description string `json:"description"`
 }
