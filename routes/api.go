@@ -60,7 +60,7 @@ func RunServer(db *gorm.DB, r *gin.Engine) *gin.Engine {
 	users.PUT("/update")
 
 	jurusan := server.Group("/jurusan")
-	jurusan.GET("/getAll", middleware.Auth, apiHandler.JurusanAPIHandler.GetAllJurusan)
+	jurusan.GET("/page", middleware.Auth, apiHandler.JurusanAPIHandler.GetAllJurusan)
 	jurusan.POST("/create", middleware.Auth, apiHandler.JurusanAPIHandler.CreateJurusan)
 	jurusan.PUT("/update", middleware.Auth, apiHandler.JurusanAPIHandler.UpdateJurusan)
 	jurusan.DELETE("/delete", middleware.Auth, apiHandler.JurusanAPIHandler.DeleteJurusan)

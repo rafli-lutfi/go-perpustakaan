@@ -10,7 +10,7 @@ import (
 
 type BukuService interface {
 	GetBukuByID(ctx context.Context, idBuku int) (model.BukuInfo, error)
-	GetAllBuku(ctx context.Context) ([]model.BukuInfo, error)
+	GetAllBuku(ctx context.Context, offset int, limit int) ([]model.BukuInfo, int, error)
 	CreateNewBuku(ctx context.Context, buku model.Buku) (model.Buku, error)
 	UpdateBuku(ctx context.Context, buku model.Buku) error
 	DeleteBuku(ctx context.Context, id int) error
@@ -77,10 +77,10 @@ func (s *bukuService) GetBukuByID(ctx context.Context, idBuku int) (model.BukuIn
 	return bukuInfo, nil
 }
 
-func (s *bukuService) GetAllBuku(ctx context.Context) ([]model.BukuInfo, error) {
-	listBuku, err := s.bukuDatabase.GetAllBuku(ctx)
+func (s *bukuService) GetAllBuku(ctx context.Context, offset int, limit int) ([]model.BukuInfo, int, error) {
+	listBuku, count, err := s.bukuDatabase.GetAllBuku(ctx, offset, limit)
 	if err != nil {
-		return []model.BukuInfo{}, err
+		return []model.BukuInfo{}, 0, err
 	}
 
 	var listBukuInfo []model.BukuInfo
@@ -88,26 +88,26 @@ func (s *bukuService) GetAllBuku(ctx context.Context) ([]model.BukuInfo, error) 
 	for _, buku := range listBuku {
 		kategori, err := s.kategoriDatabase.GetKategoriByID(ctx, buku.IDKategori)
 		if err != nil {
-			return []model.BukuInfo{}, err
+			return []model.BukuInfo{}, 0, err
 		}
 		if kategori.ID == 0 || kategori.NamaKategori == "" {
-			return []model.BukuInfo{}, errors.New("kategori not found")
+			return []model.BukuInfo{}, 0, errors.New("kategori not found")
 		}
 
 		penerbit, err := s.penerbitDatabase.GetPenerbitByID(ctx, buku.IDPenerbit)
 		if err != nil {
-			return []model.BukuInfo{}, err
+			return []model.BukuInfo{}, 0, err
 		}
 		if penerbit.ID == 0 || penerbit.NamaPenerbit == "" {
-			return []model.BukuInfo{}, errors.New("penerbit not found")
+			return []model.BukuInfo{}, 0, errors.New("penerbit not found")
 		}
 
 		author, err := s.authorDatabase.GetAuthorByID(ctx, buku.IDAuthor)
 		if err != nil {
-			return []model.BukuInfo{}, err
+			return []model.BukuInfo{}, 0, err
 		}
 		if author.ID == 0 || author.NamaPengarang == "" {
-			return []model.BukuInfo{}, errors.New("author not found")
+			return []model.BukuInfo{}, 0, errors.New("author not found")
 		}
 
 		bukuinfo := model.BukuInfo{
@@ -123,7 +123,7 @@ func (s *bukuService) GetAllBuku(ctx context.Context) ([]model.BukuInfo, error) 
 		listBukuInfo = append(listBukuInfo, bukuinfo)
 	}
 
-	return listBukuInfo, nil
+	return listBukuInfo, count, nil
 }
 
 func (s *bukuService) CreateNewBuku(ctx context.Context, buku model.Buku) (model.Buku, error) {

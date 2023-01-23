@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rafli-lutfi/perpustakaan/model"
@@ -24,7 +25,16 @@ func NewJurusanAPI(jurusanService service.JurusanService) *jurusanAPI {
 }
 
 func (j *jurusanAPI) GetAllJurusan(c *gin.Context) {
-	allJurusan, err := j.jurusanService.GetAllJurusan(c.Request.Context())
+	// Get offset and limit page
+	path := c.Request.URL.Path
+	offsetString := c.DefaultQuery("offset", "0")
+	limitString := c.DefaultQuery("limit", "20")
+
+	// convert to integer
+	offset, _ := strconv.Atoi(offsetString)
+	limit, _ := strconv.Atoi(limitString)
+
+	allJurusan, count, err := j.jurusanService.GetAllJurusan(c.Request.Context(), offset, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 			Status:      http.StatusInternalServerError,
@@ -34,9 +44,29 @@ func (j *jurusanAPI) GetAllJurusan(c *gin.Context) {
 		return
 	}
 
+	var previousPage string
+	var nextPage string
+
+	if offset+limit <= count {
+		newOffset := offset + limit
+		newOffsetString := strconv.Itoa(newOffset)
+		nextPage = path + "/?offset=" + newOffsetString + "&limit=" + limitString
+	}
+
+	if offset > 0 {
+		newOffset := offset - limit
+		newOffsetString := strconv.Itoa(newOffset)
+		previousPage = path + "/?offset=" + newOffsetString + "&limit=" + limitString
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":  http.StatusOK,
-		"data":    allJurusan,
+		"status": http.StatusOK,
+		"data": model.Pagination{
+			Count:    count,
+			Next:     nextPage,
+			Previous: previousPage,
+			Result:   allJurusan,
+		},
 		"message": "success get all jurusan",
 	})
 }

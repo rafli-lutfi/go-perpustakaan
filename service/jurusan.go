@@ -9,7 +9,7 @@ import (
 )
 
 type JurusanService interface {
-	GetAllJurusan(ctx context.Context) ([]model.Jurusan, error)
+	GetAllJurusan(ctx context.Context, offset int, limit int) ([]model.Jurusan, int, error)
 	NewJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error)
 	UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) (model.Jurusan, error)
 	DeleteJurusan(ctx context.Context, id int) error
@@ -23,13 +23,13 @@ func NewJurusanService(jurusanDatabase database.JurusanDatabase) *jurusanService
 	return &jurusanService{jurusanDatabase}
 }
 
-func (s *jurusanService) GetAllJurusan(ctx context.Context) ([]model.Jurusan, error) {
-	dbJurusan, err := s.JurusanDatabase.GetAllJurusan(ctx)
+func (s *jurusanService) GetAllJurusan(ctx context.Context, offset int, limit int) ([]model.Jurusan, int, error) {
+	dbJurusan, count, err := s.JurusanDatabase.GetAllJurusan(ctx, offset, limit)
 	if err != nil {
-		return []model.Jurusan{}, err
+		return []model.Jurusan{}, 0, err
 	}
 
-	return dbJurusan, nil
+	return dbJurusan, count, nil
 }
 
 func (s *jurusanService) NewJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error) {

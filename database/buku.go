@@ -10,7 +10,7 @@ import (
 
 type BukuDatabase interface {
 	GetBukuByID(ctx context.Context, id int) (model.Buku, error)
-	GetAllBuku(ctx context.Context) ([]model.Buku, error)
+	GetAllBuku(ctx context.Context, offset int, limit int) ([]model.Buku, int, error)
 	CreateBuku(ctx context.Context, buku model.Buku) (model.Buku, error)
 	UpdateBuku(ctx context.Context, buku model.Buku) error
 	DeleteBuku(ctx context.Context, id int) error
@@ -38,22 +38,20 @@ func (d *bukuDatabase) GetBukuByID(ctx context.Context, id int) (model.Buku, err
 	return buku, nil
 }
 
-func (d *bukuDatabase) GetAllBuku(ctx context.Context) ([]model.Buku, error) {
+func (d *bukuDatabase) GetAllBuku(ctx context.Context, offset int, limit int) ([]model.Buku, int, error) {
 	var listBuku []model.Buku
 
-	rows, err := d.db.WithContext(ctx).Model(&model.Buku{}).Rows()
+	// count all data
+	data := d.db.WithContext(ctx).Find(&[]model.Buku{})
+	count := int(data.RowsAffected)
+
+	// get data by offset and limit
+	err := d.db.WithContext(ctx).Offset(offset).Limit(limit).Find(&listBuku).Error
 	if err != nil {
-		return []model.Buku{}, err
+		return []model.Buku{}, 0, err
 	}
 
-	defer rows.Close()
-
-	for rows.Next() {
-		d.db.ScanRows(rows, &listBuku)
-
-	}
-
-	return listBuku, nil
+	return listBuku, count, nil
 }
 
 func (d *bukuDatabase) CreateBuku(ctx context.Context, buku model.Buku) (model.Buku, error) {

@@ -47,7 +47,16 @@ func (b *bukuAPI) GetBukuByID(c *gin.Context) {
 }
 
 func (b *bukuAPI) GetAllBuku(c *gin.Context) {
-	listDataBuku, err := b.bukuService.GetAllBuku(c.Request.Context())
+	// Get offset and limit page
+	path := c.Request.URL.Path
+	offsetString := c.DefaultQuery("offset", "0")
+	limitString := c.DefaultQuery("limit", "20")
+
+	// convert to integer
+	offset, _ := strconv.Atoi(offsetString)
+	limit, _ := strconv.Atoi(limitString)
+
+	listDataBuku, count, err := b.bukuService.GetAllBuku(c.Request.Context(), offset, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
 			Status:      http.StatusInternalServerError,
@@ -57,9 +66,29 @@ func (b *bukuAPI) GetAllBuku(c *gin.Context) {
 		return
 	}
 
+	var previousPage string
+	var nextPage string
+
+	if offset+limit <= count {
+		newOffset := offset + limit
+		newOffsetString := strconv.Itoa(newOffset)
+		nextPage = path + "/?offset=" + newOffsetString + "&limit=" + limitString
+	}
+
+	if offset > 0 {
+		newOffset := offset - limit
+		newOffsetString := strconv.Itoa(newOffset)
+		previousPage = path + "/?offset=" + newOffsetString + "&limit=" + limitString
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"status":  http.StatusOK,
-		"data":    listDataBuku,
+		"status": http.StatusOK,
+		"data": model.Pagination{
+			Count:    count,
+			Next:     nextPage,
+			Previous: previousPage,
+			Result:   listDataBuku,
+		},
 		"message": "success get all buku",
 	})
 }

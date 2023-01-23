@@ -10,7 +10,7 @@ import (
 
 type JurusanDatabase interface {
 	GetJurusanByID(ctx context.Context, id int) (model.Jurusan, error)
-	GetAllJurusan(ctx context.Context) ([]model.Jurusan, error)
+	GetAllJurusan(ctx context.Context, offset int, limit int) ([]model.Jurusan, int, error)
 	CreateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error)
 	UpdateJurusan(ctx context.Context, jurusan *model.Jurusan) error
 	DeleteJurusan(ctx context.Context, id int) error
@@ -37,21 +37,20 @@ func (d *jurusanDatabase) GetJurusanByID(ctx context.Context, id int) (model.Jur
 	return jurusan, nil
 }
 
-func (d *jurusanDatabase) GetAllJurusan(ctx context.Context) ([]model.Jurusan, error) {
+func (d *jurusanDatabase) GetAllJurusan(ctx context.Context, offset int, limit int) ([]model.Jurusan, int, error) {
 	jurusan := []model.Jurusan{}
 
-	rows, err := d.db.WithContext(ctx).Model(&model.Jurusan{}).Rows()
+	// count all data
+	data := d.db.WithContext(ctx).Find(&[]model.Jurusan{})
+	count := int(data.RowsAffected)
+
+	// get data by offset and limit
+	err := d.db.WithContext(ctx).Offset(offset).Limit(limit).Find(&jurusan).Error
 	if err != nil {
-		return []model.Jurusan{}, err
+		return []model.Jurusan{}, 0, err
 	}
 
-	defer rows.Close()
-
-	for rows.Next() {
-		d.db.ScanRows(rows, &jurusan)
-	}
-
-	return jurusan, nil
+	return jurusan, count, nil
 }
 
 func (d *jurusanDatabase) CreateJurusan(ctx context.Context, jurusan model.Jurusan) (model.Jurusan, error) {
